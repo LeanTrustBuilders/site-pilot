@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>trust-site pilot</title>
+<style>
+  :root { --bg: #fbfbfb; --text: #16181b; --muted: #6b7280; --line: #e3e5e8; --link: #2c5d8f; --panel: #fff; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #15171a; --text: #e6e8eb; --muted: #9ba3ae; --line: #2c3036; --link: #8ab4e0; --panel: #1f2226; color-scheme: dark; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-size: 2rem; margin: 0 0 8px; } a { color: var(--link); } .muted { color: var(--muted); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+  .card h2 { font-size: 1.15rem; margin: 0 0 4px; } .card p { margin: 4px 0; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
+</style>
+</head>
+<body>
+<main>
+<h1>trust-site pilot</h1>
+<p class="muted">Sites built by <a href="https://github.com/LeanTrustBuilders/site">trust-site</a> from datasets written by
+<a href="https://github.com/LeanTrustBuilders/extractor">trust-extract</a>. They follow
+<a href="https://github.com/LeanMachineLearning/exposition">Referee</a> page for page; see the repository for how they differ.</p>
+
+<div class="card">
+  <h2><a href="lml/">LeanMachineLearning</a></h2>
+  <p>The whole library, rebuilt every day from <a href="https://github.com/LeanMachineLearning/LML">LML</a>'s <code>main</code>. Changes are against the previous build, and each declaration says when its meaning last changed.</p>
+</div>
+<div class="card">
+  <h2><a href="alpha-rar/claims/">alpha-rar, claims only</a> · <a href="alpha-rar/">the whole library</a></h2>
+  <p>The six results <code>formalization.yaml</code> puts forward, what their statements rest on, and the 27 theorems that specify or characterize those definitions: 53 declarations of 815. Built from alpha-rar at <code>e7164a8</code> with <code>import Characterization</code> replaced by <code>import TrustAnnotations</code>, where <code>@[specifies]</code> and <code>@[characterization]</code> now live.</p>
+</div>
+<div class="card">
+  <h2><a href="colt-2026-83/claims/">colt-2026-83, claims only</a> · <a href="colt-2026-83/">the whole library</a></h2>
+  <p>Nine claims, each certified by a Comparator config, and the 19 declarations their statements rest on: 28 of 1,828. Built from colt-2026-83 at <code>3f6c0f2</code>.</p>
+</div>
+</main>
+</body>
+</html>
