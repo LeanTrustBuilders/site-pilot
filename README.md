@@ -1,6 +1,6 @@
 # site-pilot
 
-Sites built by [trust-site](https://github.com/LeanTrustBuilders/site), published at
+Sites built by [trust-site](https://github.com/LeanTrustBuilders/referee-site), published at
 <https://leantrustbuilders.github.io/site-pilot/>:
 
 - **LeanMachineLearning**, rebuilt every day from [LML](https://github.com/LeanMachineLearning/LML)'s
