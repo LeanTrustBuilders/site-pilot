@@ -4,7 +4,9 @@ name: LeanMachineLearning
 # own modules, its dataset with the newest trust-extract release for its toolchain, and the site with
 # trust-site, against the previous build as baseline and with the provenance ledger this repository
 # keeps (data/lml-ledger.json). Each build's dataset is published as the release lml-dataset-<commit>,
-# which the next build compares against. The claims demos under demos/ are deployed alongside.
+# which the next build compares against. The dataset follows dependencies into Mathlib and Lean core
+# (--upstream-closure term), and the same data is also shown with trust's front end, our fork of
+# trust-web, under trust/. The claims demos under demos/ are deployed alongside.
 on:
   schedule:
     - cron: '17 4 * * *'
@@ -63,7 +65,7 @@ jobs:
         working-directory: ${{ runner.temp }}/lml
         run: |
           lake env "$RUNNER_TEMP/trust-extract/trust-extract" extract --root LeanMachineLearning \
-            --repo LeanMachineLearning/LML --out "$RUNNER_TEMP/dataset"
+            --repo LeanMachineLearning/LML --out "$RUNNER_TEMP/dataset" --upstream-closure term
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -97,6 +99,19 @@ jobs:
           mkdir -p _site/alpha-rar _site/colt-2026-83
           cp -r demos/alpha-rar/. _site/alpha-rar/ && cp -r demos/alpha-rar-claims _site/alpha-rar/claims
           cp -r demos/colt-2026-83/. _site/colt-2026-83/ && cp -r demos/colt-2026-83-claims _site/colt-2026-83/claims
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: trust's front end, on the same dataset
+        run: |
+          git clone -q --depth 1 https://github.com/LeanTrustBuilders/trust-web "$RUNNER_TEMP/trust-web"
+          (cd "$RUNNER_TEMP/trust-web" && npm ci --no-audit --no-fund &&
+            VITE_TRUST_SERVER=none VITE_MARKS_API=none VITE_DEFAULT_INDEX=lml npm run build)
+          mkdir -p _site/trust && cp -r "$RUNNER_TEMP/trust-web/dist/." _site/trust/
+          # The first claim the site found, as the declaration shown first.
+          start=$(python3 -c "import json; c = json.load(open('_site/lml/data/site.json')).get('claims') or {}; print(((c.get('claims') or [{}])[0]).get('decl', ''))")
+          trust-site trust-index --dataset "$RUNNER_TEMP/dataset" --out _site/trust/index --name lml \
+            --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
       - name: Publish the dataset
         run: |
           tag="lml-dataset-${COMMIT:0:12}"
