@@ -1,19 +1,19 @@
 name: LeanMachineLearning
 
 # Builds the site of LeanMachineLearning's main every day: the library from its Mathlib cache and its
-# own modules, its dataset with the newest trust-extract release for its toolchain, and the site with
-# trust-site, against the previous build as baseline and with the provenance ledger this repository
-# keeps (data/lml-ledger.json). Each build's dataset is published as the release lml-dataset-<commit>,
-# which the next build compares against. The dataset follows dependencies into Mathlib and Lean core
-# (--upstream-closure term), and the same data is also shown with trust's front end, our fork of
-# trust-web, under trust/. The claims demos under demos/ are deployed alongside.
+# own modules, its dataset by the extractor's action (the newest trust-extract release for its
+# toolchain), published as the release lml-dataset-<commit12>, and the site with trust-site, against
+# the previous build as baseline and with the provenance ledger this repository keeps
+# (data/lml-ledger.json, recorded by evidence-core). The dataset follows dependencies into Mathlib and
+# Lean core (--upstream-closure term), and the same data is also shown with trust's front end, our
+# fork of trust-web, under trust/. The demos of demos.txt are built alongside, from their datasets.
 on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['demos/**', 'index.html', '.github/workflows/lml.yml']
+    paths: ['demos.txt', 'index.html', '.github/workflows/lml.yml']
 
 permissions:
   contents: write
@@ -35,7 +35,6 @@ jobs:
       - name: Room on the runner
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo sysctl -w vm.max_map_count=262144
       - name: LeanMachineLearning's main
         run: |
           git clone -q https://github.com/LeanMachineLearning/LML "$RUNNER_TEMP/lml"
@@ -43,7 +42,7 @@ jobs:
           echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "DATE=$(git log -1 --format=%cs)" >> "$GITHUB_ENV"
           echo "LABEL=$(git describe --tags --always)" >> "$GITHUB_ENV"
-          echo "TOOLCHAIN=$(sed 's/.*:v//' lean-toolchain)" >> "$GITHUB_ENV"
+          echo "TAG=lml-dataset-$(git rev-parse HEAD | cut -c1-12)" >> "$GITHUB_ENV"
       - name: Lean
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
@@ -53,37 +52,32 @@ jobs:
         run: |
           lake exe cache get
           lake build LeanMachineLearning 2>&1 | tail -3
-      - name: trust-extract for the library's toolchain
-        run: |
-          tag=$(gh release list -R LeanTrustBuilders/extractor --limit 100 --json tagName,createdAt \
-            --jq "[.[] | select(.tagName | endswith(\"-lean-v$TOOLCHAIN\"))] | sort_by(.createdAt) | last | .tagName // empty")
-          [ -n "$tag" ] || { echo "::error::no trust-extract release for Lean v$TOOLCHAIN"; exit 1; }
-          gh release download "$tag" -R LeanTrustBuilders/extractor -p 'trust-extract-linux-x86_64.tar.gz' -D "$RUNNER_TEMP"
-          tar -xzf "$RUNNER_TEMP/trust-extract-linux-x86_64.tar.gz" -C "$RUNNER_TEMP"
-          "$RUNNER_TEMP/trust-extract/trust-extract" version
-      - name: Extract
-        working-directory: ${{ runner.temp }}/lml
-        run: |
-          lake env "$RUNNER_TEMP/trust-extract/trust-extract" extract --root LeanMachineLearning \
-            --repo LeanMachineLearning/LML --out "$RUNNER_TEMP/dataset" --upstream-closure term
+      - name: Extract and publish
+        id: extract
+        uses: LeanTrustBuilders/extractor/extract@main
+        with:
+          root: LeanMachineLearning
+          repo: LeanMachineLearning/LML
+          directory: ${{ runner.temp }}/lml
+          args: --upstream-closure term
+          publish: ${{ env.TAG }}
+          title: LeanMachineLearning ${{ env.COMMIT }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: trust-site
+      - name: trust-site, with evidence-core and evidence-store
         run: pip install -q git+https://github.com/LeanTrustBuilders/referee-site
       - name: Baseline and ledger
+        env:
+          DATASET: ${{ steps.extract.outputs.dataset }}
         run: |
-          # The baseline is the previous build recorded in the ledger (the last one before this commit).
-          prev=$(python3 -c "
-          import json, os
-          b = json.load(open('data/lml-ledger.json'))['builds']
-          c = [x['commit'] for x in b if x['commit'] != os.environ['COMMIT']]
-          print(c[-1] if c else '')")
-          if [ -n "$prev" ] && gh release download "lml-dataset-${prev:0:12}" -R "$GITHUB_REPOSITORY" -p dataset.tar.gz -O "$RUNNER_TEMP/baseline.tar.gz"; then
-            mkdir -p "$RUNNER_TEMP/baseline" && tar -xzf "$RUNNER_TEMP/baseline.tar.gz" -C "$RUNNER_TEMP/baseline"
+          # The baseline is the previous build the ledger recorded, whose dataset is a release here.
+          prev=$(evidence-core ledger --ledger data/lml-ledger.json --previous "$COMMIT")
+          if [ -n "$prev" ] && evidence-store dataset --repo "$GITHUB_REPOSITORY" --tag 'lml-dataset-{commit12}' \
+              --commit "$prev" --out "$RUNNER_TEMP/baseline" > /dev/null; then
             echo "BASELINE=--baseline $RUNNER_TEMP/baseline" >> "$GITHUB_ENV"
           fi
-          trust-site ledger --ledger data/lml-ledger.json --dataset "$RUNNER_TEMP/dataset" --date "$DATE" --label "$LABEL"
+          evidence-core ledger --ledger data/lml-ledger.json --dataset "$DATASET" --date "$DATE" --label "$LABEL"
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -91,14 +85,25 @@ jobs:
             for attempt in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
           fi
       - name: Build the site
+        env:
+          DATASET: ${{ steps.extract.outputs.dataset }}
         run: |
           mkdir -p _site
-          trust-site build --dataset "$RUNNER_TEMP/dataset" --source "$RUNNER_TEMP/lml" $BASELINE \
+          trust-site build --dataset "$DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
             --ledger data/lml-ledger.json --trust mathlib --out _site/lml
           cp index.html _site/
-          mkdir -p _site/alpha-rar _site/colt-2026-83
-          cp -r demos/alpha-rar/. _site/alpha-rar/ && cp -r demos/alpha-rar-claims _site/alpha-rar/claims
-          cp -r demos/colt-2026-83/. _site/colt-2026-83/ && cp -r demos/colt-2026-83-claims _site/colt-2026-83/claims
+      - name: The demos, from their datasets
+        run: |
+          grep -v '^#' demos.txt | while read -r name repo commit; do
+            [ -n "$name" ] || continue
+            d="$RUNNER_TEMP/demos/$name"
+            evidence-store dataset --repo "$GITHUB_REPOSITORY" --tag "$name-dataset-{commit12}" --commit "$commit" \
+              --out "$d/dataset" > /dev/null
+            git init -q "$d/src" && git -C "$d/src" fetch -q --depth 1 "https://github.com/$repo" "$commit" \
+              && git -C "$d/src" checkout -q FETCH_HEAD
+            trust-site build --dataset "$d/dataset" --source "$d/src" --out "_site/$name"
+            trust-site build --dataset "$d/dataset" --source "$d/src" --claims-only --out "_site/$name/claims"
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -110,16 +115,8 @@ jobs:
           mkdir -p _site/trust && cp -r "$RUNNER_TEMP/trust-web/dist/." _site/trust/
           # The first claim the site found, as the declaration shown first.
           start=$(python3 -c "import json; c = json.load(open('_site/lml/data/site.json')).get('claims') or {}; print(((c.get('claims') or [{}])[0]).get('decl', ''))")
-          trust-site trust-index --dataset "$RUNNER_TEMP/dataset" --out _site/trust/index --name lml \
+          trust-site trust-index --dataset "${{ steps.extract.outputs.dataset }}" --out _site/trust/index --name lml \
             --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
-      - name: Publish the dataset
-        run: |
-          tag="lml-dataset-${COMMIT:0:12}"
-          if ! gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            tar -czf "$RUNNER_TEMP/dataset.tar.gz" -C "$RUNNER_TEMP/dataset" .
-            gh release create "$tag" "$RUNNER_TEMP/dataset.tar.gz" -R "$GITHUB_REPOSITORY" --latest=false \
-              --title "LeanMachineLearning ${COMMIT:0:12}" --notes "Dataset (S2) of LeanMachineLearning/LML@$COMMIT."
-          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

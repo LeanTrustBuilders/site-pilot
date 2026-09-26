@@ -1,0 +1,6 @@
+# The demo sites, built from their datasets at every run with the current trust-site: each dataset
+# is the release <name>-dataset-<commit12> of this repository (trust-extract 0.7.3), and the source
+# is the repository at that commit.
+# name          repository                  commit
+alpha-rar       RemyDegenne/alpha-rar       e7164a80baea4f65e108de31d2d561dd35e350
+colt-2026-83    RemyDegenne/colt-2026-83    3f6c0f296a3b7e4aa8fe333225505f5b2f61f9e0
