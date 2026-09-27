@@ -1,0 +1,11 @@
+# The claims of the Mathlib probability site: the probability results of Mathlib's own lists of famous
+# theorems (docs/100.yaml and docs/1000.yaml), as those lists name them.
+ProbabilityTheory.tendstoInDistribution_inv_sqrt_mul_sum_sub                            # 100 #47, the central limit theorem
+ProbabilityTheory.strong_law_ae                                                          # 100 #59, the laws of large numbers
+MeasureTheory.submartingale_iff_expected_stoppedValue_mono                               # 100 #62, fair games; the optional stopping theorem
+ProbabilityTheory.cond_eq_inv_mul_cond_mul                                               # Bayes' theorem
+MeasureTheory.TendstoInDistribution.continuous_comp_prodMk_of_tendstoInMeasure_const     # Slutsky's theorem
+MeasureTheory.ProbabilityMeasure.tendsto_iff_tendsto_charFun                             # Lévy's continuity theorem
+MeasureTheory.TendstoInDistribution.continuous_comp                                      # the continuous mapping theorem
+ProbabilityTheory.IsGaussian.exists_integrable_exp_sq                                    # Fernique's theorem
+ProbabilityTheory.tendsto_choose_mul_pow_of_tendsto_mul_atTop                            # the Poisson limit theorem

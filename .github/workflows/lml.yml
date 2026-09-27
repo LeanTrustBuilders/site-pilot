@@ -6,14 +6,15 @@ name: LeanMachineLearning
 # the previous build as baseline and with the provenance ledger this repository keeps
 # (data/lml-ledger.json, recorded by evidence-core). The dataset follows dependencies into Mathlib and
 # Lean core (--upstream-closure term), and the same data is also shown with trust's front end, our
-# fork of trust-web, under trust/. The demos of demos.txt are built alongside, from their datasets.
+# fork of trust-web, under trust/. The demos of demos.txt are built alongside, from their datasets,
+# and so is the site of Mathlib's probability theory, from Mathlib Explorer's newest dataset.
 on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['demos.txt', 'index.html', '.github/workflows/lml.yml']
+    paths: ['demos.txt', 'mathlib-probability.txt', 'index.html', '.github/workflows/lml.yml']
 
 permissions:
   contents: write
@@ -106,6 +107,25 @@ jobs:
             trust-site build --dataset "$d/dataset" --source "$d/src" --out "_site/$name"
             trust-site build --dataset "$d/dataset" --source "$d/src" --claims-only --out "_site/$name/claims"
           done
+      - name: Mathlib's probability theory, from Mathlib Explorer's dataset
+        run: |
+          # Mathlib Explorer publishes the dataset of Mathlib's newest release tag that trust-extract
+          # supports, as mathlib-dataset-<commit12>. The site is the slice Mathlib.Probability and
+          # Mathlib.InformationTheory, with what their statements rest on elsewhere in Mathlib, and its
+          # claims are those of mathlib-probability.txt.
+          tag=$(gh release list -R LeanTrustBuilders/mathlib-explorer --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("mathlib-dataset-"))] | sort_by(.createdAt) | last | .tagName')
+          d="$RUNNER_TEMP/mathlib-dataset"
+          mkdir -p "$d"
+          gh release download "$tag" -R LeanTrustBuilders/mathlib-explorer -p dataset.tar.gz -D "$RUNNER_TEMP"
+          tar -xzf "$RUNNER_TEMP/dataset.tar.gz" -C "$d" && rm "$RUNNER_TEMP/dataset.tar.gz"
+          # The history without its file contents is enough to date each module, and small to fetch.
+          git clone -q --filter=blob:none --no-checkout https://github.com/leanprover-community/mathlib4 "$RUNNER_TEMP/mathlib"
+          git -C "$RUNNER_TEMP/mathlib" checkout -q "$(jq -r .library.commit "$d/meta.json")"
+          claims=$(sed 's/#.*//' mathlib-probability.txt | awk 'NF { printf "--claim %s ", $1 }')
+          trust-site build --dataset "$d" --source "$RUNNER_TEMP/mathlib" \
+            --modules Mathlib.Probability --modules Mathlib.InformationTheory $claims \
+            --title "Mathlib: probability" --repo leanprover-community/mathlib4 --out _site/mathlib-probability
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

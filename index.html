@@ -31,6 +31,10 @@
   <p>The same dataset, read with <a href="https://github.com/LeanTrustBuilders/trust-web">our fork</a> of <a href="https://github.com/chrisflav/trust-web">trust-web</a>: each declaration's definitional dependencies as a tree and a graph, followed past the library into Mathlib and Lean core (10,288 upstream declarations), with Mathlib's trusted so that "up to trusted" stops there.</p>
 </div>
 <div class="card">
+  <h2><a href="mathlib-probability/">Mathlib: probability</a></h2>
+  <p>A slice of Mathlib: every declaration of <code>Mathlib.Probability</code> and <code>Mathlib.InformationTheory</code>, and what their statements rest on elsewhere in Mathlib, with the probability results of Mathlib's own lists of famous theorems as its claims. Rebuilt every day from <a href="https://leantrustbuilders.github.io/mathlib-explorer/">Mathlib Explorer</a>'s dataset of Mathlib's newest supported release. The testing ground for the well-definedness tools: junk values, choices, objects defined almost everywhere.</p>
+</div>
+<div class="card">
   <h2><a href="alpha-rar/claims/">alpha-rar, claims only</a> · <a href="alpha-rar/">the whole library</a></h2>
   <p>The six results <code>formalization.yaml</code> puts forward, what their statements rest on, and the 27 theorems that specify or characterize those definitions: 53 declarations of 815. Built from alpha-rar at <code>e7164a8</code> with <code>import Characterization</code> replaced by <code>import TrustAnnotations</code>, where <code>@[specifies]</code> and <code>@[characterization]</code> now live.</p>
 </div>
