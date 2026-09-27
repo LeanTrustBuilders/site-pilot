@@ -117,8 +117,9 @@ jobs:
             --jq '[.[] | select(.tagName | startswith("mathlib-dataset-"))] | sort_by(.createdAt) | last | .tagName')
           d="$RUNNER_TEMP/mathlib-dataset"
           mkdir -p "$d"
-          gh release download "$tag" -R LeanTrustBuilders/mathlib-explorer -p dataset.tar.gz -D "$RUNNER_TEMP"
-          tar -xzf "$RUNNER_TEMP/dataset.tar.gz" -C "$d" && rm "$RUNNER_TEMP/dataset.tar.gz"
+          # A directory of its own: the extractor's action leaves LeanMachineLearning's dataset.tar.gz in $RUNNER_TEMP.
+          gh release download "$tag" -R LeanTrustBuilders/mathlib-explorer -p dataset.tar.gz -D "$RUNNER_TEMP/mathlib-release"
+          tar -xzf "$RUNNER_TEMP/mathlib-release/dataset.tar.gz" -C "$d" && rm -r "$RUNNER_TEMP/mathlib-release"
           # The history without its file contents is enough to date each module, and small to fetch.
           git clone -q --filter=blob:none --no-checkout https://github.com/leanprover-community/mathlib4 "$RUNNER_TEMP/mathlib"
           git -C "$RUNNER_TEMP/mathlib" checkout -q "$(jq -r .library.commit "$d/meta.json")"
