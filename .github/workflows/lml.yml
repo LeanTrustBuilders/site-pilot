@@ -60,6 +60,8 @@ jobs:
           repo: LeanMachineLearning/LML
           directory: ${{ runner.temp }}/lml
           args: --upstream-closure term
+          # Lean's kernel checks every closure, proofs included (a few seconds on this library).
+          check: meaning term
           publish: ${{ env.TAG }}
           title: LeanMachineLearning ${{ env.COMMIT }}
       - uses: actions/setup-python@v5
