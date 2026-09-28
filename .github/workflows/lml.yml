@@ -132,7 +132,7 @@ jobs:
             if evidence-core merge --dataset "$d" --add "$RUNNER_TEMP/catalogue" --out "$RUNNER_TEMP/mathlib-merged"; then
               d="$RUNNER_TEMP/mathlib-merged"
             else
-              echo "::warning::the Mathlib catalogue ($ctag) was not built against this Mathlib; the site is built without it"
+              echo "::warning::merging the Mathlib catalogue ($ctag) failed (its error is above); the site is built without it"
             fi
           fi
           # The history without its file contents is enough to date each module, and small to fetch.
