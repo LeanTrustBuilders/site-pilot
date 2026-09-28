@@ -104,8 +104,9 @@ jobs:
               --out "$d/dataset" > /dev/null
             git init -q "$d/src" && git -C "$d/src" fetch -q --depth 1 "https://github.com/$repo" "$commit" \
               && git -C "$d/src" checkout -q FETCH_HEAD
-            trust-site build --dataset "$d/dataset" --source "$d/src" --out "_site/$name"
-            trust-site build --dataset "$d/dataset" --source "$d/src" --claims-only --out "_site/$name/claims"
+            # Both demos are built on Mathlib, which their sites vouch for, as the LML site does.
+            trust-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --out "_site/$name"
+            trust-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --claims-only --out "_site/$name/claims"
           done
       - name: Mathlib's probability theory, from Mathlib Explorer's dataset
         run: |
