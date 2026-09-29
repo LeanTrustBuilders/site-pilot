@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['demos.txt', 'mathlib-probability.txt', 'index.html', '.github/workflows/lml.yml']
+    paths: ['demos.txt', 'mathlib-probability.txt', 'index.html', 'evidence/**', '.github/workflows/lml.yml']
 
 permissions:
   contents: write
@@ -92,8 +92,12 @@ jobs:
           DATASET: ${{ steps.extract.outputs.dataset }}
         run: |
           mkdir -p _site
+          # LeanMachineLearning's evidence store (evidence/) and the stores it imports: reviews made
+          # elsewhere of the Mathlib definitions it rests on show on its pages.
+          evidence-store fetch-imports --store evidence --out "$RUNNER_TEMP/imports"
           trust-site build --dataset "$DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
-            --ledger data/lml-ledger.json --trust mathlib --out _site/lml
+            --ledger data/lml-ledger.json --trust mathlib --evidence evidence --imports "$RUNNER_TEMP/imports" \
+            --issues-repo "$GITHUB_REPOSITORY" --out _site/lml
           cp index.html _site/
       - name: The demos, from their datasets
         run: |
@@ -154,7 +158,7 @@ jobs:
           # The first claim the site found, as the declaration shown first.
           start=$(python3 -c "import json; c = json.load(open('_site/lml/data/site.json')).get('claims') or {}; print(((c.get('claims') or [{}])[0]).get('decl', ''))")
           trust-site trust-index --dataset "${{ steps.extract.outputs.dataset }}" --out _site/trust/index --name lml \
-            --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
+            --evidence evidence --imports "$RUNNER_TEMP/imports" --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

@@ -1,0 +1,19 @@
+{
+ "spec": "ltb-evidence-store/0",
+ "library": {
+  "repo": "LeanMachineLearning/LML",
+  "root": "LeanMachineLearning"
+ },
+ "datasets": {
+  "repo": "LeanTrustBuilders/site-pilot",
+  "tag": "lml-dataset-{commit12}",
+  "asset": "dataset.tar.gz"
+ },
+ "claims": [],
+ "maintainers": [],
+ "imports": [
+  {
+   "repo": "LeanTrustBuilders/mathlib-probability-evidence"
+  }
+ ]
+}
