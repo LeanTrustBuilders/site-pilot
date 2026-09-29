@@ -87,23 +87,39 @@ jobs:
             git commit -q -am "LeanMachineLearning ${COMMIT:0:7}: record the build"
             for attempt in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
           fi
-      - name: Build the site
+      - name: The LeanMachineLearning catalogue
         env:
           DATASET: ${{ steps.extract.outputs.dataset }}
+        run: |
+          # What LeanMachineLearning's definitions are meant to be, declared from outside it (domains,
+          # characterizations, specifications), with the analysis of its bandit statements against
+          # the domains: LeanTrustBuilders/lml-catalogue publishes it as dataset-<commit12>. It is
+          # merged in when both describe the same commit of LeanMachineLearning.
+          echo "SITE_DATASET=$DATASET" >> "$GITHUB_ENV"
+          ctag=$(gh release list -R LeanTrustBuilders/lml-catalogue --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("dataset-"))] | sort_by(.createdAt) | last | .tagName // ""')
+          [ -n "$ctag" ] || exit 0
+          mkdir -p "$RUNNER_TEMP/lml-catalogue"
+          gh release download "$ctag" -R LeanTrustBuilders/lml-catalogue -p dataset.tar.gz -D "$RUNNER_TEMP/lml-catalogue-release"
+          tar -xzf "$RUNNER_TEMP/lml-catalogue-release/dataset.tar.gz" -C "$RUNNER_TEMP/lml-catalogue"
+          if evidence-core merge --dataset "$DATASET" --add "$RUNNER_TEMP/lml-catalogue" --out "$RUNNER_TEMP/lml-merged"; then
+            echo "SITE_DATASET=$RUNNER_TEMP/lml-merged" >> "$GITHUB_ENV"
+          else
+            echo "::warning::merging the LeanMachineLearning catalogue ($ctag) failed (its error is above); the site is built without it"
+          fi
+      - name: Build the site
         run: |
           mkdir -p _site
           # LeanMachineLearning's evidence store (evidence/) and the stores it imports: reviews made
           # elsewhere of the Mathlib definitions it rests on show on its pages.
           evidence-store fetch-imports --store evidence --out "$RUNNER_TEMP/imports"
-          referee-site build --dataset "$DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
+          referee-site build --dataset "$SITE_DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
             --ledger data/lml-ledger.json --trust mathlib --evidence evidence --imports "$RUNNER_TEMP/imports" \
             --issues-repo "$GITHUB_REPOSITORY" --out _site/lml
           cp index.html _site/
       - name: One claim's page, the regret bound of UCB
-        env:
-          DATASET: ${{ steps.extract.outputs.dataset }}
         run: |
-          referee-site claim --dataset "$DATASET" --store evidence --imports "$RUNNER_TEMP/imports" \
+          referee-site claim --dataset "$SITE_DATASET" --store evidence --imports "$RUNNER_TEMP/imports" \
             --source "$RUNNER_TEMP/lml" --claim "Bandits.UCB.regret_le_of_gt_two'" \
             --repo "$GITHUB_REPOSITORY" --out _site/lml-ucb
       - name: The demos, from their datasets
@@ -164,7 +180,7 @@ jobs:
           mkdir -p _site/trust && cp -r "$RUNNER_TEMP/trust-web/dist/." _site/trust/
           # The first claim the site found, as the declaration shown first.
           start=$(python3 -c "import json; c = json.load(open('_site/lml/data/site.json')).get('claims') or {}; print(((c.get('claims') or [{}])[0]).get('decl', ''))")
-          referee-site trust-index --dataset "${{ steps.extract.outputs.dataset }}" --out _site/trust/index --name lml \
+          referee-site trust-index --dataset "$SITE_DATASET" --out _site/trust/index --name lml \
             --evidence evidence --imports "$RUNNER_TEMP/imports" --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
       - uses: actions/upload-pages-artifact@v3
         with:

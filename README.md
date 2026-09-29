@@ -13,7 +13,13 @@ Sites built by [referee-site](https://github.com/LeanTrustBuilders/referee-site)
 - **LeanMachineLearning with trust's front end**, from the same build (`trust/`): the dataset is
   extracted with `--upstream-closure term`, written as the index
   [trust-web](https://github.com/LeanTrustBuilders/trust-web) reads (`referee-site trust-index`), and
-  shown with our fork of it.
+  shown with the LeanTrustBuilders fork of it.
+- **One claim's page**, the regret bound of UCB (`lml-ucb/`, `referee-site claim`), from the same build.
+- **LeanMachineLearning's evidence store** (`evidence/`, with its issue forms and intake), which the
+  site and the claim page read, with the stores it imports (`evidence-store fetch-imports`).
+- **The [LeanMachineLearning catalogue](https://github.com/LeanTrustBuilders/lml-catalogue)**: its
+  newest dataset is merged into LeanMachineLearning's (`evidence-core merge`) when both describe the
+  same commit, and the site, the claim page and trust's index are built from the result.
 - **alpha-rar** and **colt-2026-83**, the whole library and claims only, rebuilt at every run with the
   current referee-site from their datasets (`demos.txt`: the releases `<name>-dataset-<commit>` of this
   repository, extracted by trust-extract 0.7.3) and their repositories at those commits. alpha-rar's
