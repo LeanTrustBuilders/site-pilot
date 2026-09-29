@@ -1,4 +1,4 @@
-# The demo sites, built from their datasets at every run with the current trust-site: each dataset
+# The demo sites, built from their datasets at every run with the current referee-site: each dataset
 # is the release <name>-dataset-<commit12> of this repository (trust-extract 0.7.3), and the source
 # is the repository at that commit.
 # name          repository                  commit

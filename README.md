@@ -1,6 +1,6 @@
 # site-pilot
 
-Sites built by [trust-site](https://github.com/LeanTrustBuilders/referee-site), published at
+Sites built by [referee-site](https://github.com/LeanTrustBuilders/referee-site), published at
 <https://leantrustbuilders.github.io/site-pilot/>:
 
 - **LeanMachineLearning**, rebuilt every day from [LML](https://github.com/LeanMachineLearning/LML)'s
@@ -12,14 +12,14 @@ Sites built by [trust-site](https://github.com/LeanTrustBuilders/referee-site), 
   dataset as the baseline.
 - **LeanMachineLearning with trust's front end**, from the same build (`trust/`): the dataset is
   extracted with `--upstream-closure term`, written as the index
-  [trust-web](https://github.com/LeanTrustBuilders/trust-web) reads (`trust-site trust-index`), and
+  [trust-web](https://github.com/LeanTrustBuilders/trust-web) reads (`referee-site trust-index`), and
   shown with our fork of it.
 - **alpha-rar** and **colt-2026-83**, the whole library and claims only, rebuilt at every run with the
-  current trust-site from their datasets (`demos.txt`: the releases `<name>-dataset-<commit>` of this
+  current referee-site from their datasets (`demos.txt`: the releases `<name>-dataset-<commit>` of this
   repository, extracted by trust-extract 0.7.3) and their repositories at those commits. alpha-rar's
   dataset was extracted with `import Characterization` replaced by `import TrustAnnotations`, where
   `@[specifies]` and `@[characterization]` now live.
 
 Nothing here computes what the pages say: the extractor writes the datasets, evidence-core decides
-statuses, claims, changes and provenance, evidence-store fetches datasets, and trust-site lays pages
+statuses, claims, changes and provenance, evidence-store fetches datasets, and referee-site lays pages
 out.

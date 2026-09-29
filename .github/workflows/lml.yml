@@ -2,7 +2,7 @@ name: LeanMachineLearning
 
 # Builds the site of LeanMachineLearning's main every day: the library from its Mathlib cache and its
 # own modules, its dataset by the extractor's action (the newest trust-extract release for its
-# toolchain), published as the release lml-dataset-<commit12>, and the site with trust-site, against
+# toolchain), published as the release lml-dataset-<commit12>, and the site with referee-site, against
 # the previous build as baseline and with the provenance ledger this repository keeps
 # (data/lml-ledger.json, recorded by evidence-core). The dataset follows dependencies into Mathlib and
 # Lean core (--upstream-closure term), and the same data is also shown with trust's front end, our
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: trust-site, with evidence-core and evidence-store
+      - name: referee-site, with evidence-core and evidence-store
         run: pip install -q git+https://github.com/LeanTrustBuilders/referee-site
       - name: Baseline and ledger
         env:
@@ -95,7 +95,7 @@ jobs:
           # LeanMachineLearning's evidence store (evidence/) and the stores it imports: reviews made
           # elsewhere of the Mathlib definitions it rests on show on its pages.
           evidence-store fetch-imports --store evidence --out "$RUNNER_TEMP/imports"
-          trust-site build --dataset "$DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
+          referee-site build --dataset "$DATASET" --source "$RUNNER_TEMP/lml" $BASELINE \
             --ledger data/lml-ledger.json --trust mathlib --evidence evidence --imports "$RUNNER_TEMP/imports" \
             --issues-repo "$GITHUB_REPOSITORY" --out _site/lml
           cp index.html _site/
@@ -109,8 +109,8 @@ jobs:
             git init -q "$d/src" && git -C "$d/src" fetch -q --depth 1 "https://github.com/$repo" "$commit" \
               && git -C "$d/src" checkout -q FETCH_HEAD
             # Both demos are built on Mathlib, which their sites vouch for, as the LML site does.
-            trust-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --out "_site/$name"
-            trust-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --claims-only --out "_site/$name/claims"
+            referee-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --out "_site/$name"
+            referee-site build --dataset "$d/dataset" --source "$d/src" --trust mathlib --claims-only --out "_site/$name/claims"
           done
       - name: Mathlib's probability theory, from Mathlib Explorer's dataset
         run: |
@@ -143,7 +143,7 @@ jobs:
           git clone -q --filter=blob:none --no-checkout https://github.com/leanprover-community/mathlib4 "$RUNNER_TEMP/mathlib"
           git -C "$RUNNER_TEMP/mathlib" checkout -q "$(jq -r .library.commit "$d/meta.json")"
           claims=$(sed 's/#.*//' mathlib-probability.txt | awk 'NF { printf "--claim %s ", $1 }')
-          trust-site build --dataset "$d" --source "$RUNNER_TEMP/mathlib" \
+          referee-site build --dataset "$d" --source "$RUNNER_TEMP/mathlib" \
             --modules Mathlib.Probability --modules Mathlib.InformationTheory $claims \
             --title "Mathlib: probability" --repo leanprover-community/mathlib4 --out _site/mathlib-probability
       - uses: actions/setup-node@v4
@@ -157,7 +157,7 @@ jobs:
           mkdir -p _site/trust && cp -r "$RUNNER_TEMP/trust-web/dist/." _site/trust/
           # The first claim the site found, as the declaration shown first.
           start=$(python3 -c "import json; c = json.load(open('_site/lml/data/site.json')).get('claims') or {}; print(((c.get('claims') or [{}])[0]).get('decl', ''))")
-          trust-site trust-index --dataset "${{ steps.extract.outputs.dataset }}" --out _site/trust/index --name lml \
+          referee-site trust-index --dataset "${{ steps.extract.outputs.dataset }}" --out _site/trust/index --name lml \
             --evidence evidence --imports "$RUNNER_TEMP/imports" --trust mathlib --decl-url "../lml/#/d/{name}" ${start:+--start "$start"}
       - uses: actions/upload-pages-artifact@v3
         with:
