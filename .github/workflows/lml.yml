@@ -99,6 +99,13 @@ jobs:
             --ledger data/lml-ledger.json --trust mathlib --evidence evidence --imports "$RUNNER_TEMP/imports" \
             --issues-repo "$GITHUB_REPOSITORY" --out _site/lml
           cp index.html _site/
+      - name: One claim's page, the regret bound of UCB
+        env:
+          DATASET: ${{ steps.extract.outputs.dataset }}
+        run: |
+          referee-site claim --dataset "$DATASET" --store evidence --imports "$RUNNER_TEMP/imports" \
+            --source "$RUNNER_TEMP/lml" --claim "Bandits.UCB.regret_le_of_gt_two'" \
+            --repo "$GITHUB_REPOSITORY" --out _site/lml-ucb
       - name: The demos, from their datasets
         run: |
           grep -v '^#' demos.txt | while read -r name repo commit; do
