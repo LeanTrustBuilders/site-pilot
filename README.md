@@ -1,5 +1,9 @@
 # site-pilot
 
+No longer rebuilt: LeanMachineLearning builds its own site with referee-site in its CI, and its
+evidence store is [LeanMachineLearning/LML-evidence](https://github.com/LeanMachineLearning/LML-evidence).
+The pages here are those of the last build, and the workflows are disabled.
+
 Sites built by [referee-site](https://github.com/LeanTrustBuilders/referee-site), published at
 <https://leantrustbuilders.github.io/site-pilot/>:
 
@@ -15,8 +19,9 @@ Sites built by [referee-site](https://github.com/LeanTrustBuilders/referee-site)
   [trust-web](https://github.com/LeanTrustBuilders/trust-web) reads (`referee-site trust-index`), and
   shown with the LeanTrustBuilders fork of it.
 - **One claim's page**, the regret bound of UCB (`lml-ucb/`, `referee-site claim`), from the same build.
-- **LeanMachineLearning's evidence store** (`evidence/`, with its issue forms and intake), which the
-  site and the claim page read, with the stores it imports (`evidence-store fetch-imports`).
+- **LeanMachineLearning's evidence store** (`evidence/`), as it was when it moved to
+  LeanMachineLearning/LML-evidence, which the site and the claim page read, with the stores it
+  imports (`evidence-store fetch-imports`).
 - **The [LeanMachineLearning catalogue](https://github.com/LeanTrustBuilders/lml-catalogue)**: its
   newest dataset is merged into LeanMachineLearning's (`evidence-core merge`) when both describe the
   same commit, and the site, the claim page and trust's index are built from the result.
